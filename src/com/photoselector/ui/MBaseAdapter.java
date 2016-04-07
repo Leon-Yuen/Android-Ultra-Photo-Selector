@@ -11,9 +11,8 @@ import android.widget.BaseAdapter;
 /**
  * 
  * @author Aizaz
- *
+ * 
  */
-
 
 public class MBaseAdapter<T> extends BaseAdapter {
 
@@ -51,14 +50,12 @@ public class MBaseAdapter<T> extends BaseAdapter {
 		return null;
 	}
 
-	/** ¸üÐÂÊý¾Ý */
-	public void update(List<T> models) {
+	/** ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
+	public void update(List<T> list) {
 		if (models == null)
 			return;
 		this.models.clear();
-		for (T t : models) {
-			this.models.add(t);
-		}
+		this.models.addAll(list);
 		notifyDataSetChanged();
 	}
 

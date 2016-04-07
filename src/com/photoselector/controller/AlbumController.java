@@ -8,6 +8,7 @@ import java.util.Map;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
+import android.provider.MediaStore;
 import android.provider.MediaStore.Images.ImageColumns;
 import android.provider.MediaStore.Images.Media;
 
@@ -17,15 +18,63 @@ import com.photoselector.model.PhotoModel;
 public class AlbumController {
 
 	private ContentResolver resolver;
+	String[] projection = new String[] { MediaStore.Images.ImageColumns._ID,
+			MediaStore.Images.ImageColumns.DATA,
+			MediaStore.Images.ImageColumns.BUCKET_DISPLAY_NAME,
+			MediaStore.Images.ImageColumns.SIZE,
+			MediaStore.Images.ImageColumns.DATE_TAKEN,
+			MediaStore.Images.ImageColumns.MIME_TYPE };
 
 	public AlbumController(Context context) {
 		resolver = context.getContentResolver();
 	}
 
-	/** »ñÈ¡×î½üÕÕÆ¬ÁÐ±í */
 	public List<PhotoModel> getCurrent() {
-		Cursor cursor = resolver.query(Media.EXTERNAL_CONTENT_URI, new String[] { ImageColumns.DATA,
-				ImageColumns.DATE_ADDED, ImageColumns.SIZE }, null, null, ImageColumns.DATE_ADDED);
+		List<PhotoModel> photos = new ArrayList<PhotoModel>();
+		Cursor cursor = null;
+		try {
+			cursor = resolver.query(Media.EXTERNAL_CONTENT_URI, projection,
+					null, null, MediaStore.Images.ImageColumns.DATE_TAKEN + " ASC");
+			if (cursor != null) {
+				/*
+				cursor.moveToFirst();
+				while (cursor.moveToNext()) {
+					if(cursor.getLong(cursor.getColumnIndex(ImageColumns.SIZE)) > 1024 *10) {
+						PhotoModel photoModel = new PhotoModel();
+						photoModel.setOriginalPath(cursor.getString(cursor
+								.getColumnIndex(ImageColumns.DATA)));
+						photos.add(photoModel);
+					}
+				}*/
+				
+				cursor.moveToLast();
+				do {
+					if (cursor.getLong(cursor.getColumnIndex(ImageColumns.SIZE)) > 1024 * 10) {
+						PhotoModel photoModel = new PhotoModel();
+						photoModel.setOriginalPath(cursor.getString(cursor
+								.getColumnIndex(ImageColumns.DATA)));
+						photos.add(photoModel);
+					}
+				} while (cursor.moveToPrevious());
+				
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (null != cursor) {
+				cursor.close();
+			}
+		}
+		return photos;
+	}
+
+	/**  
+	public List<PhotoModel> getCurrent() {
+		Cursor cursor = resolver.query(Media.EXTERNAL_CONTENT_URI,
+				new String[] { ImageColumns.DATA, ImageColumns.DATE_ADDED,
+						ImageColumns.SIZE }, null, null,
+				ImageColumns.DATE_ADDED + " DESC");
+
 		if (cursor == null || !cursor.moveToNext())
 			return new ArrayList<PhotoModel>();
 		List<PhotoModel> photos = new ArrayList<PhotoModel>();
@@ -33,34 +82,42 @@ public class AlbumController {
 		do {
 			if (cursor.getLong(cursor.getColumnIndex(ImageColumns.SIZE)) > 1024 * 10) {
 				PhotoModel photoModel = new PhotoModel();
-				photoModel.setOriginalPath(cursor.getString(cursor.getColumnIndex(ImageColumns.DATA)));
+				photoModel.setOriginalPath(cursor.getString(cursor
+						.getColumnIndex(ImageColumns.DATA)));
 				photos.add(photoModel);
 			}
 		} while (cursor.moveToPrevious());
 		return photos;
 	}
+*/
 
-	/** »ñÈ¡ËùÓÐÏà²áÁÐ±í */
+	/** ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð±ï¿½ */
 	public List<AlbumModel> getAlbums() {
 		List<AlbumModel> albums = new ArrayList<AlbumModel>();
 		Map<String, AlbumModel> map = new HashMap<String, AlbumModel>();
-		Cursor cursor = resolver.query(Media.EXTERNAL_CONTENT_URI, new String[] { ImageColumns.DATA,
-				ImageColumns.BUCKET_DISPLAY_NAME, ImageColumns.SIZE }, null, null, null);
+		Cursor cursor = resolver.query(Media.EXTERNAL_CONTENT_URI,
+				new String[] { ImageColumns.DATA,
+						ImageColumns.BUCKET_DISPLAY_NAME, ImageColumns.SIZE },
+				null, null, null);
 		if (cursor == null || !cursor.moveToNext())
 			return new ArrayList<AlbumModel>();
 		cursor.moveToLast();
-		AlbumModel current = new AlbumModel("×î½üÕÕÆ¬", 0, cursor.getString(cursor.getColumnIndex(ImageColumns.DATA)), true); // "×î½üÕÕÆ¬"Ïà²á
+		AlbumModel current = new AlbumModel("æœ€è¿‘ç…§ç‰‡", 0, cursor.getString(cursor
+				.getColumnIndex(ImageColumns.DATA)), true); // "ï¿½ï¿½ï¿½ï¿½ï¿½Æ¬"ï¿½ï¿½ï¿½
 		albums.add(current);
 		do {
 			if (cursor.getInt(cursor.getColumnIndex(ImageColumns.SIZE)) < 1024 * 10)
 				continue;
 
 			current.increaseCount();
-			String name = cursor.getString(cursor.getColumnIndex(ImageColumns.BUCKET_DISPLAY_NAME));
+			String name = cursor.getString(cursor
+					.getColumnIndex(ImageColumns.BUCKET_DISPLAY_NAME));
 			if (map.keySet().contains(name))
 				map.get(name).increaseCount();
 			else {
-				AlbumModel album = new AlbumModel(name, 1, cursor.getString(cursor.getColumnIndex(ImageColumns.DATA)));
+				AlbumModel album = new AlbumModel(name, 1,
+						cursor.getString(cursor
+								.getColumnIndex(ImageColumns.DATA)));
 				map.put(name, album);
 				albums.add(album);
 			}
@@ -68,10 +125,12 @@ public class AlbumController {
 		return albums;
 	}
 
-	/** »ñÈ¡¶ÔÓ¦Ïà²áÏÂµÄÕÕÆ¬ */
+	/***/
 	public List<PhotoModel> getAlbum(String name) {
-		Cursor cursor = resolver.query(Media.EXTERNAL_CONTENT_URI, new String[] { ImageColumns.BUCKET_DISPLAY_NAME,
-				ImageColumns.DATA, ImageColumns.DATE_ADDED, ImageColumns.SIZE }, "bucket_display_name = ?",
+		Cursor cursor = resolver.query(Media.EXTERNAL_CONTENT_URI,
+				new String[] { ImageColumns.BUCKET_DISPLAY_NAME,
+						ImageColumns.DATA, ImageColumns.DATE_ADDED,
+						ImageColumns.SIZE }, "bucket_display_name = ?",
 				new String[] { name }, ImageColumns.DATE_ADDED);
 		if (cursor == null || !cursor.moveToNext())
 			return new ArrayList<PhotoModel>();
@@ -80,7 +139,8 @@ public class AlbumController {
 		do {
 			if (cursor.getLong(cursor.getColumnIndex(ImageColumns.SIZE)) > 1024 * 10) {
 				PhotoModel photoModel = new PhotoModel();
-				photoModel.setOriginalPath(cursor.getString(cursor.getColumnIndex(ImageColumns.DATA)));
+				photoModel.setOriginalPath(cursor.getString(cursor
+						.getColumnIndex(ImageColumns.DATA)));
 				photos.add(photoModel);
 			}
 		} while (cursor.moveToPrevious());

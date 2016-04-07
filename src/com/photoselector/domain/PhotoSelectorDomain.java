@@ -40,28 +40,8 @@ public class PhotoSelectorDomain {
 			}
 		}).start();
 	}
-
-	/** »ñÈ¡Ïà²áÁĞ±í */
-	public void updateAlbum(final OnLocalAlbumListener listener) {
-		final Handler handler = new Handler() {
-			@SuppressWarnings("unchecked")
-			@Override
-			public void handleMessage(Message msg) {
-				listener.onAlbumLoaded((List<AlbumModel>) msg.obj);
-			}
-		};
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				List<AlbumModel> albums = albumController.getAlbums();
-				Message msg = new Message();
-				msg.obj = albums;
-				handler.sendMessage(msg);
-			}
-		}).start();
-	}
-
-	/** »ñÈ¡µ¥¸öÏà²áÏÂµÄËùÓĞÕÕÆ¬ĞÅÏ¢ */
+	
+	/** ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Âµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¬ï¿½ï¿½Ï¢ */
 	public void getAlbum(final String name, final OnLocalReccentListener listener) {
 		final Handler handler = new Handler() {
 			@SuppressWarnings("unchecked")
@@ -81,4 +61,23 @@ public class PhotoSelectorDomain {
 		}).start();
 	}
 
+	/** ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ğ±ï¿½ */
+	public void updateAlbum(final OnLocalAlbumListener listener) {
+		final Handler handler = new Handler() {
+			@SuppressWarnings("unchecked")
+			@Override
+			public void handleMessage(Message msg) {
+				listener.onAlbumLoaded((List<AlbumModel>) msg.obj);
+			}
+		};
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				List<AlbumModel> albums = albumController.getAlbums();
+				Message msg = new Message();
+				msg.obj = albums;
+				handler.sendMessage(msg);
+			}
+		}).start();
+	}
 }

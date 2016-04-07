@@ -11,6 +11,7 @@ import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.photoselector.R;
@@ -18,54 +19,87 @@ import com.photoselector.model.PhotoModel;
 
 /**
  * @author Aizaz AZ
- *
  */
-
 public class PhotoItem extends LinearLayout implements OnCheckedChangeListener,
 		OnLongClickListener {
 
 	private ImageView ivPhoto;
 	private CheckBox cbPhoto;
-	private onPhotoItemCheckedListener listener;
+	private OnPhotoItemCheckedListener checkListener;
 	private PhotoModel photo;
 	private boolean isCheckAll;
-	private onItemClickListener l;
-	private int position;	
+	private onItemClickListener clickListener;
+	private int position;
 
 	private PhotoItem(Context context) {
 		super(context);
 	}
 
-	public PhotoItem(Context context, onPhotoItemCheckedListener listener) {
+	public PhotoItem(Context context, OnPhotoItemCheckedListener listener) {
 		this(context);
 		LayoutInflater.from(context).inflate(R.layout.layout_photoitem, this,
 				true);
-		this.listener = listener;
-
-		setOnLongClickListener(this);
+		this.checkListener = listener;
+		this.setOnLongClickListener(this);
 
 		ivPhoto = (ImageView) findViewById(R.id.iv_photo_lpsi);
 		cbPhoto = (CheckBox) findViewById(R.id.cb_photo_lpsi);
 
-		cbPhoto.setOnCheckedChangeListener(this); // CheckBox选中状态改变监听器
+		cbPhoto.setOnCheckedChangeListener(this);
 	}
 
 	@Override
 	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-		if (!isCheckAll) {
-			listener.onCheckedChanged(photo, buttonView, isChecked); // 调用主界面回调函数
-		}
-		// 让图片变暗或者变亮
+//		if (!isCheckAll) {
+//			checkListener.onCheckedChanged(photo, buttonView, isChecked);
+//		}
+//		if (isChecked) {
+//			setDrawingable();
+//			ivPhoto.setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);
+//		} else {
+//			ivPhoto.clearColorFilter();
+//		}
+//		photo.setChecked(isChecked);
+
+	
 		if (isChecked) {
-			setDrawingable();
-			ivPhoto.setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);
+			if (checkListener instanceof PhotoSelectorActivity) {
+				PhotoSelectorActivity ref = (PhotoSelectorActivity) checkListener;
+				if (!ref.selectedPhoto.contains(this.photo)) {
+					int selected = ref.selectedPhoto.size();
+//					System.out.println("count = " + selected);
+					
+					if (!(selected < PhotoSelectorActivity.MAX_IMAGE)) {
+						Toast.makeText(
+								ref.getApplicationContext(),
+								getResources().getString(
+										R.string.max_img_limit_reached,
+										selected), Toast.LENGTH_SHORT).show();
+						buttonView.setChecked(false);
+						photo.setChecked(false);
+						return;
+					} else {
+						checkListener.onCheckedChanged(photo, buttonView,
+								isChecked);
+						setDrawingable();
+						ivPhoto.setColorFilter(Color.GRAY,
+								PorterDuff.Mode.MULTIPLY);
+						photo.setChecked(true);
+					}
+				}
+//				else{
+					//included, photo.setChecked(false)
+//				}
+			}
 		} else {
+			checkListener.onCheckedChanged(photo, buttonView, isChecked);
 			ivPhoto.clearColorFilter();
+			photo.setChecked(false);
 		}
-		photo.setChecked(isChecked);
+		 
 	}
 
-	/** 设置路径下的图片对应的缩略图 */
+	/***/
 	public void setImageDrawable(final PhotoModel photo) {
 		this.photo = photo;
 		// You may need this setting form some custom ROM(s)
@@ -86,6 +120,10 @@ public class PhotoItem extends LinearLayout implements OnCheckedChangeListener,
 		ivPhoto.buildDrawingCache();
 	}
 
+	// public void setPhotoChecked(boolean checked){
+	// cbPhoto.setChecked(checked);
+	// }
+
 	@Override
 	public void setSelected(boolean selected) {
 		if (photo == null) {
@@ -96,9 +134,22 @@ public class PhotoItem extends LinearLayout implements OnCheckedChangeListener,
 		isCheckAll = false;
 	}
 
-	public void setOnClickListener(onItemClickListener l, int position) {
-		this.l = l;
+	/*
+	 * @Override public void setSelected(boolean selected) { if (photo == null)
+	 * { return; } isCheckAll = true; cbPhoto.setChecked(selected); isCheckAll =
+	 * false; }
+	 */
+
+	public void setOnClickListener(onItemClickListener listener, int position) {
+		this.clickListener = listener;
 		this.position = position;
+	}
+
+	@Override
+	public boolean onLongClick(View v) {
+		if (clickListener != null)
+			clickListener.onItemClick(position);
+		return true;
 	}
 
 	// @Override
@@ -108,22 +159,14 @@ public class PhotoItem extends LinearLayout implements OnCheckedChangeListener,
 	// l.onItemClick(position);
 	// }
 
-	/** 图片Item选中事件监听器 */
-	public static interface onPhotoItemCheckedListener {
+	/***/
+	public static interface OnPhotoItemCheckedListener {
 		public void onCheckedChanged(PhotoModel photoModel,
 				CompoundButton buttonView, boolean isChecked);
 	}
 
-	/** 图片点击事件 */
+	/***/
 	public interface onItemClickListener {
 		public void onItemClick(int position);
 	}
-
-	@Override
-	public boolean onLongClick(View v) {
-		if (l != null)
-			l.onItemClick(position);
-		return true;
-	}
-
 }
